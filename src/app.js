@@ -1,9 +1,6 @@
-
 'use strict';
 
 const Fastify = require('fastify');
-const path = require('node:path');
-const fastifyStatic = require('@fastify/static');
 
 const authPlugin = require('./plugins/auth');
 const authRoutes = require('./modules/auth/auth.routes');
@@ -23,27 +20,22 @@ function buildApp() {
     trustProxy: false
   });
 
-  // [ADDED] Sajikan file frontend dari src/public.
-  fastify.register(fastifyStatic, {
-    root: path.join(__dirname, 'public'),
-    prefix: '/',
-    index: false,
-    wildcard: false
-  });
+  // Backend API saja. Frontend akan di-deploy terpisah ke Vercel.
+  fastify.get('/', async () => ({
+    success: true,
+    name: 'ExGudang API',
+    message: 'Backend is running',
+    health: '/api/health'
+  }));
 
-  // [ADDED] Halaman utama web app.
-  fastify.get('/', async (request, reply) => {
-    return reply.sendFile('index.html');
-  });
-
-  // [ADDED] Pemeriksaan status backend.
+  // Health check untuk pemeriksaan server.
   fastify.get('/api/health', async () => ({
     success: true,
     message: 'ExGudang API is running',
     timestamp: new Date().toISOString()
   }));
 
-  // API aplikasi.
+  // Daftarkan plugin dan semua route API.
   fastify.register(async function initializeApplication(app) {
     await app.register(authPlugin);
 
